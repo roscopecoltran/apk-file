@@ -132,6 +132,8 @@ func main() {
 		ds.AppendValues(f.path, f.pkg, f.branch, f.repo, f.arch)
 	}
 
+	// "markdown", "csv", "yaml", "json", "xlsx", "xml", "tsv", "mysql", "postgres", "html", "ascii"
+
 	if output == "json" {
 		resultJSON, _ := ds.JSON()
 		fmt.Println(resultJSON)
