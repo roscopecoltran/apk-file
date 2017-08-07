@@ -133,3 +133,7 @@ FILE                                                                  PACKAGE   
 /usr/lib/erlang/lib/stdlib-2.4/ebin/filelib.beam                      erlang17-stdlib     edge                testing             x86
 /usr/share/doc/swish-e/examples/prog-bin/file.pl                      swish-e-doc         edge                main                armhf
 ```
+
+```
+$ ./apk-file --output=yaml -arch=x86_64 version.h
+```

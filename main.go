@@ -3,13 +3,15 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
+	//"io"
+	//"io/ioutil"
 	"net/url"
 	"os"
 	"path"
 	"strings"
-	"text/tabwriter"
-
+	// "text/tabwriter"
+	//"bytes"
+	"github.com/agrison/go-tablib"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/Sirupsen/logrus"
 	"github.com/jessfraz/apk-file/version"
@@ -38,10 +40,14 @@ type fileInfo struct {
 var (
 	arch string
 	repo string
+	output string
+	save string
+	result string
 
 	debug bool
 	vrsn  bool
 
+	validOutput = []string{"markdown", "csv", "yaml", "json", "xlsx", "xml", "tsv", "mysql", "postgres", "html", "ascii"}
 	validArches = []string{"x86", "x86_64", "armhf"}
 	validRepos  = []string{"main", "community", "testing"}
 )
@@ -50,6 +56,9 @@ func init() {
 	// Parse flags
 	flag.StringVar(&arch, "arch", "", "arch to search for ("+strings.Join(validArches, ", ")+")")
 	flag.StringVar(&repo, "repo", "", "repository to search in ("+strings.Join(validRepos, ", ")+")")
+	flag.StringVar(&output, "output", "", "output results with  ("+strings.Join(validOutput, ", ")+") format.")
+	flag.StringVar(&save, "save", "", "save output results to the output_file.[FORMAT].")
+
 
 	flag.BoolVar(&vrsn, "version", false, "print version and exit")
 	flag.BoolVar(&vrsn, "v", false, "print version and exit (shorthand)")
@@ -81,6 +90,18 @@ func init() {
 	}
 }
 
+	
+func check(e error) {
+    if e != nil {
+        panic(e)
+    }
+}
+
+// NewDataset creates a new dataset
+//func NewDataset() *tablib.Dataset {
+//	return tablib.NewDataset(ColumnNames)
+//}
+
 func main() {
 	if flag.NArg() < 1 {
 		logrus.Fatal("must pass a file to search for.")
@@ -102,22 +123,35 @@ func main() {
 		logrus.Fatalf("requesting %s failed: %v", uri, err)
 	}
 
-	// create the writer
-	w := tabwriter.NewWriter(os.Stdout, 20, 1, 3, ' ', 0)
-	io.WriteString(w, "FILE\tPACKAGE\tBRANCH\tREPOSITORY\tARCHITECTURE\n")
-
 	files := getFilesInfo(doc)
 
+	ds 		:= tablib.NewDataset([]string{"file", "package", "branch", "repository", "architecture"})
+	
 	for _, f := range files {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
-			f.path,
-			f.pkg,
-			f.branch,
-			f.repo,
-			f.arch)
+		// https://github.com/agrison/go-tablib
+		ds.AppendValues(f.path, f.pkg, f.branch, f.repo, f.arch)
 	}
 
-	w.Flush()
+	if output == "json" {
+		resultJSON, _ := ds.JSON()
+		fmt.Println(resultJSON)
+		if resultJSON.WriteFile("./results.json", 0644) != nil {
+		    fmt.Println(err)
+		}
+	} else if output == "yaml" {
+		resultYAML, _ := ds.YAML()
+		fmt.Println(resultYAML)
+		if resultYAML.WriteFile("./results.yml", 0644) != nil {
+		    fmt.Println(err)
+		}
+	} else {
+		ascii := ds.Tabular("grid" /* tablib.TabularGrid */)	
+		fmt.Println(ascii)
+		fmt.Println(&output)
+		fmt.Println(output)
+	}
+
+	//w.Flush()
 }
 
 func usageAndExit(message string, exitCode int) {
