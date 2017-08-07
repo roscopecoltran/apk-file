@@ -3,14 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	//"io"
-	//"io/ioutil"
 	"net/url"
 	"os"
 	"path"
 	"strings"
-	// "text/tabwriter"
-	//"bytes"
 	"github.com/agrison/go-tablib"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/Sirupsen/logrus"
@@ -41,11 +37,13 @@ var (
 	arch string
 	repo string
 	output string
-	save string
 	result string
+	prefixPath string 
+	filename string
 
 	debug bool
 	vrsn  bool
+	save bool
 
 	validOutput = []string{"markdown", "csv", "yaml", "json", "xlsx", "xml", "tsv", "mysql", "postgres", "html", "ascii"}
 	validArches = []string{"x86", "x86_64", "armhf"}
@@ -57,9 +55,10 @@ func init() {
 	flag.StringVar(&arch, "arch", "", "arch to search for ("+strings.Join(validArches, ", ")+")")
 	flag.StringVar(&repo, "repo", "", "repository to search in ("+strings.Join(validRepos, ", ")+")")
 	flag.StringVar(&output, "output", "", "output results with  ("+strings.Join(validOutput, ", ")+") format.")
-	flag.StringVar(&save, "save", "", "save output results to the output_file.[FORMAT].")
+	flag.StringVar(&prefixPath, "./output", "results", "output results to prefix_path (default: ./output).")
+	flag.StringVar(&filename, "filename", "results", "output results to filename: (default: ./results.[FORMAT]).")
 
-
+	flag.BoolVar(&save, "save", true, "save output results to the output_file.[FORMAT].")
 	flag.BoolVar(&vrsn, "version", false, "print version and exit")
 	flag.BoolVar(&vrsn, "v", false, "print version and exit (shorthand)")
 	flag.BoolVar(&debug, "d", false, "run in debug mode")
@@ -97,11 +96,6 @@ func check(e error) {
     }
 }
 
-// NewDataset creates a new dataset
-//func NewDataset() *tablib.Dataset {
-//	return tablib.NewDataset(ColumnNames)
-//}
-
 func main() {
 	if flag.NArg() < 1 {
 		logrus.Fatal("must pass a file to search for.")
@@ -134,26 +128,86 @@ func main() {
 
 	// "markdown", "csv", "yaml", "json", "xlsx", "xml", "tsv", "mysql", "postgres", "html", "ascii"
 
-	if output == "json" {
-		resultJSON, _ := ds.JSON()
-		fmt.Println(resultJSON)
-		if resultJSON.WriteFile("./results.json", 0644) != nil {
-		    fmt.Println(err)
-		}
-	} else if output == "yaml" {
-		resultYAML, _ := ds.YAML()
-		fmt.Println(resultYAML)
-		if resultYAML.WriteFile("./results.yml", 0644) != nil {
-		    fmt.Println(err)
-		}
-	} else {
-		ascii := ds.Tabular("grid" /* tablib.TabularGrid */)	
-		fmt.Println(ascii)
-		fmt.Println(&output)
-		fmt.Println(output)
+	switch output {
+
+		case "csv":
+			result, _ := ds.CSV()
+			if save == true {
+				if result.WriteFile(prefixPath+"/"+filename+"."+output, 0644) != nil {
+				    fmt.Println(err)
+				}
+			}
+			fmt.Println(result)
+		case "tsv":
+			result, _ := ds.TSV()
+			if save == true {
+				if result.WriteFile(prefixPath+"/"+filename+"."+output, 0644) != nil {
+				    fmt.Println(err)
+				}
+			}
+			fmt.Println(result)
+		case "yaml":
+			result, _ := ds.YAML()
+			if save == true {
+				if result.WriteFile(prefixPath+"/"+filename+"."+output, 0644) != nil {
+				    fmt.Println(err)
+				}
+			}
+			fmt.Println(result)
+		case "json":
+			result, _ := ds.JSON()
+			if save == true {
+				if result.WriteFile(prefixPath+"/"+filename+"."+output, 0644) != nil {
+				    fmt.Println(err)
+				}
+			}
+			fmt.Println(result)
+		case "xlsx":
+			result, _ := ds.XLSX()
+			if save == true {
+				if result.WriteFile(prefixPath+"/"+filename+"."+output, 0644) != nil {
+				    fmt.Println(err)
+				}
+			}
+			fmt.Println(result)
+		case "xml":
+			result, _ := ds.XML()
+			if save == true {
+				if result.WriteFile(prefixPath+"/"+filename+"."+output, 0644) != nil {
+				    fmt.Println(err)
+				}
+			}
+			fmt.Println(result)
+		/*
+		case "mysql":
+			result, _ := ds.MySQL()
+			fmt.Println(result)
+			if result.WriteFile(prefixPath+"/"+filename+"."+output, 0644) != nil {
+			    fmt.Println(err)
+			}
+			fmt.Println(result)
+		case "postgres":
+			result := ds.Postgres()
+			fmt.Println(result)
+			if result.WriteFile(prefixPath+"/"+filename+"."+output, 0644) != nil {
+			    fmt.Println(err)
+			}
+			fmt.Println(result)
+		*/
+		case "html":
+			result, _ := ds.XLSX()
+			fmt.Println(result)
+			if result.WriteFile(prefixPath+"/"+filename+"."+output, 0644) != nil {
+			    fmt.Println(err)
+			}
+			fmt.Println(result)
+		case "ascii":
+		default:
+			ascii := ds.Tabular("grid" /* tablib.TabularGrid */)	
+			fmt.Println(ascii)
 	}
 
-	//w.Flush()
+
 }
 
 func usageAndExit(message string, exitCode int) {
